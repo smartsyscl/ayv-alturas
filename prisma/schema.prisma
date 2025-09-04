@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Cotizacion {
+  id              String   @id @default(cuid())
+  nombre          String
+  email           String
+  telefono        String
+  tipoServicio    String
+  tipoEdificio    String
+  pisos           String
+  metrosCuadrados String
+  direccion       String
+  fechaEjecucion  DateTime
+  presupuesto     String?
+  fotos           String[] // URLs de Cloudinary
+  comentarios     String?
+  estado          String   @default("nuevo") // nuevo, en_contacto, cotizado, cerrado
+  notas           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("cotizaciones")
+}
