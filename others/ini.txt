@@ -1,0 +1,421 @@
+# Guía Completa: Sistema de Cotización Trabajos Verticales
+
+## 📋 Índice
+1. [Registro en Plataformas](#1-registro-en-plataformas)
+2. [Configuración de Base de Datos](#2-configuración-de-base-de-datos)
+3. [Setup del Proyecto Local](#3-setup-del-proyecto-local)
+4. [Configuración de Servicios](#4-configuración-de-servicios)
+5. [Deploy y Producción](#5-deploy-y-producción)
+
+---
+
+## 1. Registro en Plataformas
+
+### 🚀 Vercel (Hosting Frontend)
+
+1. **Ir a** [vercel.com](https://vercel.com)
+2. **Hacer clic en** "Sign Up"
+3. **Registrarse con GitHub** (recomendado)
+   - Si no tienes GitHub, créalo primero en [github.com](https://github.com)
+4. **Verificar email** si es necesario
+5. **Completar perfil** básico
+
+### 🐘 Neon (Base de Datos PostgreSQL)
+
+1. **Ir a** [neon.tech](https://neon.tech)
+2. **Hacer clic en** "Sign up"
+3. **Registrarse con GitHub** (usar la misma cuenta)
+4. **Crear primer proyecto:**
+   - Project name: `trabajos-verticales`
+   - Database name: `cotizador_db`
+   - Region: `US East (Ohio)` (más cercano a Chile con mejor latencia)
+5. **Guardar** la connection string que aparece
+
+### ☁️ Cloudinary (Almacenamiento de Imágenes)
+
+1. **Ir a** [cloudinary.com](https://cloudinary.com)
+2. **Hacer clic en** "Sign Up Free"
+3. **Completar formulario:**
+   - Email
+   - Contraseña
+   - Cloud Name: `trabajos-verticales-cl` (o similar único)
+4. **Verificar email**
+5. **Ir al Dashboard > Settings > API Keys**
+6. **Copiar:**
+   - Cloud Name
+   - API Key  
+   - API Secret
+
+### 📧 Resend (Envío de Emails)
+
+1. **Ir a** [resend.com](https://resend.com)
+2. **Hacer clic en** "Get Started"
+3. **Registrarse con email**
+4. **Verificar cuenta**
+5. **Crear API Key:**
+   - Ir a "API Keys"
+   - "Create API Key"
+   - Name: `trabajos-verticales-prod`
+   - Permission: `Full access`
+6. **Copiar y guardar** la API Key
+
+---
+
+## 2. Configuración de Base de Datos
+
+### 📊 Setup Neon PostgreSQL
+
+1. **En tu dashboard de Neon:**
+   - Ir a tu proyecto `trabajos-verticales`
+   - Clic en "Connection Details"
+   - Copiar "Connection string"
+
+2. **La string se ve así:**
+```
+postgresql://usuario:password@ep-cool-base-123456.us-east-1.aws.neon.tech/cotizador_db?sslmode=require
+```
+
+3. **Guardar esta información** (la usaremos después)
+
+---
+
+## 3. Setup del Proyecto Local
+
+### 💻 Instalación de Herramientas
+
+**Verificar que tienes instalado:**
+```bash
+# Node.js (versión 18 o superior)
+node --version
+
+# Si no tienes Node.js, descárgalo de: https://nodejs.org
+```
+
+### 🛠️ Crear Proyecto
+
+**1. Abrir terminal/cmd y ejecutar:**
+```bash
+# Crear proyecto Next.js
+npx create-next-app@latest trabajos-verticales --typescript --tailwind --eslint --app --src-dir
+
+# Entrar al directorio
+cd trabajos-verticales
+```
+
+**2. Instalar dependencias adicionales:**
+```bash
+npm install prisma @prisma/client
+npm install bcryptjs jsonwebtoken
+npm install @types/bcryptjs @types/jsonwebtoken
+npm install react-hook-form @hookform/resolvers zod
+npm install framer-motion lucide-react
+npm install resend
+npm install multer
+npm install @types/multer
+```
+
+**3. Inicializar Prisma:**
+```bash
+npx prisma init
+```
+
+### 📁 Estructura de Carpetas
+
+**Crear la siguiente estructura:**
+```
+trabajos-verticales/
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── auth/
+│   │   │   │   └── route.ts
+│   │   │   ├── cotizaciones/
+│   │   │   │   └── route.ts
+│   │   │   └── upload/
+│   │   │       └── route.ts
+│   │   ├── dashboard/
+│   │   │   ├── page.tsx
+│   │   │   └── layout.tsx
+│   │   ├── login/
+│   │   │   └── page.tsx
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── components/
+│   │   ├── forms/
+│   │   ├── dashboard/
+│   │   └── ui/
+│   ├── lib/
+│   │   ├── auth.ts
+│   │   ├── db.ts
+│   │   ├── utils.ts
+│   │   └── validations.ts
+├── prisma/
+│   ├── schema.prisma
+│   └── seed.ts
+├── .env.local
+└── middleware.ts
+```
+
+---
+
+## 4. Configuración de Servicios
+
+### 🗃️ Configurar Base de Datos
+
+**1. Editar `prisma/schema.prisma`:**
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Cotizacion {
+  id              String   @id @default(cuid())
+  nombre          String
+  email           String
+  telefono        String
+  tipoServicio    String
+  tipoEdificio    String
+  pisos           String
+  metrosCuadrados String
+  direccion       String
+  fechaEjecucion  DateTime
+  presupuesto     String?
+  fotos           String[] // URLs de Cloudinary
+  comentarios     String?
+  estado          String   @default("nuevo") // nuevo, en_contacto, cotizado, cerrado
+  notas           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("cotizaciones")
+}
+```
+
+### 🔐 Variables de Entorno
+
+**Crear archivo `.env.local` en la raíz:**
+```env
+# Base de datos - Usar tu connection string de Neon
+DATABASE_URL="postgresql://usuario:password@ep-cool-base-123456.us-east-1.aws.neon.tech/cotizador_db?sslmode=require"
+
+# JWT Secret - Generar uno fuerte
+JWT_SECRET="tu-jwt-secret-super-seguro-de-al-menos-32-caracteres"
+
+# Admin por defecto
+ADMIN_EMAIL="admin@tuempresa.cl"
+ADMIN_PASSWORD="tu-password-seguro"
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME="tu-cloud-name"
+CLOUDINARY_API_KEY="tu-api-key"  
+CLOUDINARY_API_SECRET="tu-api-secret"
+
+# Resend
+RESEND_API_KEY="tu-resend-api-key"
+FROM_EMAIL="noreply@tudominio.com"
+
+# URLs
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="otro-secret-para-nextauth"
+```
+
+### 📦 Configurar Prisma
+
+**1. Generar cliente y ejecutar migraciones:**
+```bash
+# Generar cliente Prisma
+npx prisma generate
+
+# Aplicar schema a la base de datos
+npx prisma db push
+
+# Ver la base de datos (opcional)
+npx prisma studio
+```
+
+**2. Crear seed para admin inicial:**
+
+**Archivo `prisma/seed.ts`:**
+```typescript
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
+
+const prisma = new PrismaClient()
+
+async function main() {
+  const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', 12)
+  
+  await prisma.user.upsert({
+    where: { email: process.env.ADMIN_EMAIL || 'admin@tuempresa.cl' },
+    update: {},
+    create: {
+      email: process.env.ADMIN_EMAIL || 'admin@tuempresa.cl',
+      name: 'Administrador',
+      password: hashedPassword,
+      role: 'admin',
+    },
+  })
+}
+
+main()
+  .catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })
+```
+
+**3. Ejecutar seed:**
+```bash
+npx prisma db seed
+```
+
+### 🔧 Utilidades Base
+
+**Archivo `src/lib/db.ts`:**
+```typescript
+import { PrismaClient } from '@prisma/client'
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
+}
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+```
+
+**Archivo `src/lib/auth.ts`:**
+```typescript
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
+
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 12)
+}
+
+export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+  return bcrypt.compare(password, hashedPassword)
+}
+
+export function signToken(payload: any): string {
+  return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '7d' })
+}
+
+export function verifyToken(token: string): any {
+  return jwt.verify(token, process.env.JWT_SECRET!)
+}
+```
+
+---
+
+## 5. Deploy y Producción
+
+### 🚢 Preparar para Deploy
+
+**1. Actualizar `package.json`:**
+```json
+{
+  "scripts": {
+    "postinstall": "prisma generate",
+    "db:seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}
+```
+
+**2. Crear `.vercelignore`:**
+```
+.env.local
+.env
+node_modules
+.next
+```
+
+### 🌐 Deploy en Vercel
+
+**1. Subir código a GitHub:**
+```bash
+# Inicializar git (si no existe)
+git init
+
+# Agregar archivos
+git add .
+
+# Commit inicial
+git commit -m "Initial commit - Sistema cotización trabajos verticales"
+
+# Crear repositorio en GitHub y conectar
+git remote add origin https://github.com/tu-usuario/trabajos-verticales.git
+git push -u origin main
+```
+
+**2. Deploy en Vercel:**
+- Ir a [vercel.com/dashboard](https://vercel.com/dashboard)
+- Clic en "New Project"
+- Seleccionar tu repositorio `trabajos-verticales`
+- Configurar variables de entorno:
+  - Agregar todas las variables de `.env.local`
+- Clic en "Deploy"
+
+**3. Configurar dominio personalizado (opcional):**
+- En settings del proyecto
+- Ir a "Domains"
+- Agregar tu dominio
+
+---
+
+## ✅ Lista de Verificación Final
+
+**Antes de continuar, verifica que tienes:**
+
+- [ ] Cuenta Vercel configurada
+- [ ] Base de datos Neon funcionando
+- [ ] Cloudinary configurado
+- [ ] Resend configurado
+- [ ] Proyecto local corriendo (`npm run dev`)
+- [ ] Variables de entorno configuradas
+- [ ] Admin user creado en base de datos
+- [ ] Deploy exitoso en Vercel
+
+**¿Listo para continuar con la implementación del código?**
+
+---
+
+## 🆘 Troubleshooting Común
+
+**Error: "Can't connect to database"**
+- Verificar connection string de Neon
+- Asegurar que DATABASE_URL esté bien copiada
+
+**Error: "JWT Secret required"**
+- Verificar que JWT_SECRET tenga al menos 32 caracteres
+
+**Error: "Prisma Client not generated"**
+- Ejecutar: `npx prisma generate`
+
+**Error de deploy en Vercel**
+- Verificar que todas las env vars estén configuradas
+- Revisar logs de build en Vercel dashboard
