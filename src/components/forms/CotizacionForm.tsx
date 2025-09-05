@@ -77,8 +77,12 @@ export default function CotizacionForm() {
       setSuccess(true);
       reset(); // Limpiar el formulario
 
-    } catch (err: any) {
-      setError(err.message || "Algo salió mal. Por favor, inténtalo de nuevo.");
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Algo salió mal. Por favor, inténtalo de nuevo.");
+        }
     } finally {
       setLoading(false);
     }

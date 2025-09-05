@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/app/lib/db";
 
-// 1. Definimos un esquema de validación con Zod para el backend.
-// Esto asegura que los datos que procesamos tienen la forma que esperamos.
 const cotizacionSchema = z.object({
   nombre: z.string().min(2, "El nombre es requerido."),
   email: z.string().email("El email no es válido."),
@@ -17,38 +15,42 @@ const cotizacionSchema = z.object({
   presupuesto: z.string().optional(),
   comentarios: z.string().optional(),
   urgencia: z.string().optional(),
-  fotos: z.array(z.string()).optional(), // Esperamos un array de URLs
+  fotos: z.array(z.string()).optional(),
 });
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-
-    // 2. Validamos los datos del body contra el esquema.
     const validation = cotizacionSchema.safeParse(body);
 
     if (!validation.success) {
-      // Si la validación falla, devolvemos un error 400 con los detalles.
       return NextResponse.json({ ok: false, error: "Datos inválidos", details: validation.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    // 3. Los datos son válidos, procedemos con el procesamiento.
     const { data } = validation;
 
-    // Conversión de tipos de datos, ahora con la certeza de que los datos existen si fueron provistos.
-    const pisos = data.pisos ? parseInt(data.pisos, 10) : null;
-    const metrosCuadrados = data.metrosCuadrados ? parseFloat(data.metrosCuadrados) : null;
-    const fechaEjecucion = data.fechaEjecucion && !isNaN(new Date(data.fechaEjecucion).getTime()) 
-                             ? new Date(data.fechaEjecucion) 
-                             : null;
-
-    // 4. Creamos el registro en la base de datos con datos limpios y validados.
+    // Solución definitiva: No se convierte ningún tipo de dato.
+    // Simplemente nos aseguramos de que los campos opcionales tengan un valor
+    // de string vacío si no se proporcionan, para coincidir con el esquema de la BD.
     const cotizacion = await prisma.cotizacion.create({
       data: {
-        ...data,
-        pisos,
-        metrosCuadrados,
-        fechaEjecucion,
+        nombre: data.nombre,
+        email: data.email,
+        telefono: data.telefono,
+        tipoServicio: data.tipoServicio,
+        tipoEdificio: data.tipoEdificio,
+        
+        // Todos los campos opcionales del formulario se tratan como strings.
+        pisos: data.pisos || "",
+        metrosCuadrados: data.metrosCuadrados || "",
+        direccion: data.direccion || "",
+        presupuesto: data.presupuesto || "",
+        comentarios: data.comentarios || "",
+        
+
+        // 'fechaEjecucion' también se trata como un simple string.
+        fechaEjecucion: data.fechaEjecucion || "",
+        
         fotos: data.fotos || [],
         estado: "pendiente",
         notas: "",

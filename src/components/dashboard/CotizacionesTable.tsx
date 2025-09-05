@@ -27,8 +27,12 @@ export default function CotizacionesTable() {
         }
         const data = await res.json();
         setCotizaciones(data.cotizaciones || []);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Ocurrió un error inesperado.");
+        }
       } finally {
         setLoading(false);
       }
