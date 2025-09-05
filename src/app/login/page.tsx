@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Cookies from "js-cookie";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,6 +19,8 @@ export default function LoginPage() {
     });
     setLoading(false);
     if (res.ok) {
+      const { token } = await res.json();
+      Cookies.set("token", token, { expires: 7 }); // Guardar la cookie por 7 días
       window.location.href = "/dashboard";
     } else {
       const data = await res.json();

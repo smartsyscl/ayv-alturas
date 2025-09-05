@@ -1,18 +1,24 @@
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcryptjs'
+import { SignJWT, jwtVerify } from 'jose';
+import bcrypt from 'bcryptjs';
 
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 12)
+  return bcrypt.hash(password, 12);
 }
 
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  return bcrypt.compare(password, hashedPassword)
+  return bcrypt.compare(password, hashedPassword);
 }
 
-export function signToken(payload: object): string {
-  return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '7d' })
+export async function signToken(payload: object): Promise<string> {
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('7d')
+    .sign(secret);
 }
 
-export function verifyToken(token: string): unknown {
-  return jwt.verify(token, process.env.JWT_SECRET!)
+export async function verifyToken(token: string): Promise<unknown> {
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+  const { payload } = await jwtVerify(token, secret);
+  return payload;
 }

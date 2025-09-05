@@ -12,6 +12,6 @@ export async function POST(req: NextRequest) {
   if (!valid) {
     return NextResponse.json({ error: "Contraseña incorrecta" }, { status: 401 });
   }
-  const token = signToken({ id: user.id, email: user.email, role: user.role });
+  const token = await signToken({ id: user.id, email: user.email, role: user.role });
   return NextResponse.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
 }
