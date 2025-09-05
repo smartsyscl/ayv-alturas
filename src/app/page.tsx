@@ -1,22 +1,17 @@
-import Link from "next/link";
+import CotizacionForm from "@/components/forms/CotizacionForm";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">
-          Bienvenido al Sistema de Cotizaciones
+    <main className="container mx-auto px-4 py-8 flex flex-col items-center">
+      <div className="w-full max-w-2xl">
+        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
+          Solicita una Cotización para tu Proyecto
         </h1>
-        <p className="text-lg text-gray-600 mb-8">
-          Gestione sus cotizaciones de trabajos verticales de forma eficiente.
+        <p className="text-center text-gray-600 mb-10">
+          Completa el siguiente formulario y nos pondremos en contacto a la brevedad.
         </p>
-        <Link
-          href="/login"
-          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors"
-        >
-          Ir al Login
-        </Link>
+        <CotizacionForm />
       </div>
-    </div>
+    </main>
   );
 }
