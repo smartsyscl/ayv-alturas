@@ -1,17 +1,31 @@
 import CotizacionForm from "@/components/forms/CotizacionForm";
+import { Building } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <main className="container mx-auto px-4 py-8 flex flex-col items-center">
-      <div className="w-full max-w-2xl">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
-          Solicita una Cotización para tu Proyecto
-        </h1>
-        <p className="text-center text-gray-600 mb-10">
-          Completa el siguiente formulario y nos pondremos en contacto a la brevedad.
-        </p>
-        <CotizacionForm />
-      </div>
-    </main>
+    // Fondo con degradado sutil para un look más profesional
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100">
+      
+      {/* Encabezado simple y limpio */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center py-4">
+            <Building className="h-8 w-8 text-blue-600 mr-3" />
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">AYV Alturas</h1>
+              <p className="text-sm text-gray-600">Cotización de Trabajos Verticales en Línea</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Contenido principal que centra el formulario */}
+      <main className="container mx-auto px-4 py-12 flex flex-col items-center">
+        <div className="w-full max-w-3xl">
+          <CotizacionForm />
+        </div>
+      </main>
+
+    </div>
   );
 }
